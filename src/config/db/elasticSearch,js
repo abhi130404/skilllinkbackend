@@ -1,0 +1,3 @@
+const { Client } = require("@elastic/elasticsearch");
+const client = new Client({ node: 'https://elastic:jWSrJcPS1hiv0zmcVmcq00bT@abf1b1b42bdc42aab764c101abbe1174.us-central1.gcp.cloud.es.io:9243' }); // or your ES host
+ module.exports = {client};    
