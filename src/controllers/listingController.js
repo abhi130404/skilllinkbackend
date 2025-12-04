@@ -278,6 +278,7 @@ const getAllListingForInstructor = asyncHandler(async (req, res) => {
     const searchText = req.query.searchText || "";
     const from = parseInt(req.query.from || "0");
     const size = parseInt(req.query.size || "20");
+      const status=req.query.status || "";
 
 
 
@@ -287,6 +288,9 @@ const getAllListingForInstructor = asyncHandler(async (req, res) => {
     // Search text filter
     if (searchText) {
       filter.$text = { $search: searchText };
+    }
+     if (status !== "") {
+      filter.status = status; 
     }
 
     // isDeleted filter → only apply if query param exists
