@@ -88,12 +88,12 @@ const updateListing = asyncHandler(async (req, res) => {
     const data = req.body;
     
     // Prevent instructor ID change via update
-    if (data.instructorId && data.instructorId !== req.user._id.toString()) {
-      return res.status(403).json({ 
-        code: 1, 
-        message: "Cannot change listing ownership" 
-      });
-    }
+    // if (data.instructorId && data.instructorId !== req.user._id.toString()) {
+    //   return res.status(403).json({ 
+    //     code: 1, 
+    //     message: "Cannot change listing ownership" 
+    //   });
+    // }
 
     // Detect changed fields
     const changedFields = [];
@@ -322,10 +322,8 @@ const getAllListingForUser = asyncHandler(async (req, res) => {
     const from = parseInt(req.query.from || "0");
     const size = parseInt(req.query.size || "20");
     const listingTypeId=req.query.listingTypeId || "";
+  const status=req.query.status || "";
 
-
-    // Build filter object - always filter by instructorId
-    // const filter = { instructorId: req.user._id };
     const filter={};
 
     // Search text filter
@@ -340,7 +338,9 @@ const getAllListingForUser = asyncHandler(async (req, res) => {
       filter.isDeleted = req.query.isDeleted === "true"; 
       // converts "true"/"false" to boolean
     }
-
+   if (status !== "") {
+      filter.status = status; 
+    }
     // Total count
     const totalCount = await Listing.countDocuments(filter);
 

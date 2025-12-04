@@ -10,7 +10,14 @@ const userSchema = new Schema(
     name: { type: String }, // name not required for mobile login
 
      mobileNo: { type: String, unique: true, sparse: true },
-    emailID: { type: String, unique: true, sparse: true },
+    emailID: { 
+      type: String, 
+      unique: true, 
+      sparse: true,
+      set: function(email) {
+        return email ? email.toLowerCase().trim() : email;
+      }
+    },
      isMobileNoVerified: { type: Boolean, default: false },
     isEmailIDVerified: { type: Boolean, default: false },
    // email: { type: String, unique: false, sparse: true},
@@ -46,28 +53,112 @@ const userSchema = new Schema(
   },
   { timestamps: true }
 );
+const categorySchema = new mongoose.Schema(
+  {
+    name: { type: String, required: true, trim: true },
+    slug: { type: String, required: true, unique: true },
+    image: { type: String },     // optional
+    isDeleted: { type: Boolean, default: false }, // active/inactive
+  },
+  { timestamps: true }
+);
+
+const subCategorySchema = new mongoose.Schema(
+  {
+    categoryId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Category",
+      required: true,
+    },
+    name: { type: String, required: true, trim: true },
+    slug: { type: String, required: true, unique: true },
+    categoryName:{type:String},  
+    image: { type: String },
+    isDeleted: { type: Boolean, default: false },
+  },
+  { timestamps: true }
+);
+
+const topicSchema = new mongoose.Schema(
+  {
+    subCategoryId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "SubCategory",
+      required: true,
+    },
+    name: { type: String, required: true, trim: true },
+    slug: { type: String, required: true, unique: true },
+    subCategoryName:{type:String},
+    image: { type: String },
+    isDeleted: { type: Boolean, default: false },
+  },
+  { timestamps: true }
+);
 
 
+const adminSchema = new Schema(
+  {
+    role: { type: String, enum: ["learner", "instructor", "admin"], default: "learner" },
+    name: { type: String }, // name not required for mobile login
 
+     mobileNo: { type: String, unique: true, sparse: true },
+      emailID: { 
+      type: String, 
+      unique: true, 
+      sparse: true,
+      set: function(email) {
+        return email ? email.toLowerCase().trim() : email;
+      }
+    },
+     isMobileNoVerified: { type: Boolean, default: false },
+    isEmailIDVerified: { type: Boolean, default: false },
+   // email: { type: String, unique: false, sparse: true},
+    profileImage: String,
+    isDeleted:{type:Boolean,default:false},
 
+    // Updated as array of objects
+   
+
+    socialLinks: {
+    },
+  },
+  { timestamps: true }
+);
 const instructorSchema = new Schema(
   {
+      rejectionReason:{type:String},
     role: { type: String, enum: ["learner", "instructor", "admin"], default: "instructor" },
     type: { type: String, enum: ["entity", "individual"], default: "individual" },
-
+   category: { type: String, enum: ["","tutor", "classes","institute","eventOrganizer"], default: "" },
     name: { type: String },
     mobileNo: { type: String, unique: true, sparse: true },
-    emailID: { type: String, unique: true, sparse: true },
+      emailID: { 
+      type: String, 
+      unique: true, 
+      sparse: true,
+      set: function(email) {
+        return email ? email.toLowerCase().trim() : email;
+      }
+    },
 
     isMobileNoVerified: { type: Boolean, default: false },
     isEmailIDVerified: { type: Boolean, default: false },
 
     instructorId: { type: String },
-
+youtubeVideos:[],
+    isKycCompleted:{type:Boolean,default:false},
     gstin: { type: String },
     pan: { type: String },
     adharNo: { type: String },
-
+      socialLinks: {
+    youtube: { type: String },
+    linkedin: { type: String },
+    instagram: { type: String },
+    facebook:{ type: String },
+    website:{type:String},
+  },
+  images:[],
+ title:{type:String},
     status: {
       type: String,
       enum: ["initiated", "pendingApproval", "approved", "rejected"],
@@ -115,6 +206,8 @@ const instructorSchema = new Schema(
       type: Object, // { Monday: [{from, to}], Tuesday:[...] }
       default: {}
     },
+contactPersonName:{type:String},
+
 
   },
   { timestamps: true }
@@ -131,7 +224,14 @@ const authProviderSchema = new Schema(
       enum: ["mobile_password", "google", "meta", "email_password"],
       required: true
     },
-    emailID: { type: String },
+     emailID: { 
+      type: String, 
+      unique: true, 
+      sparse: true,
+      set: function(email) {
+        return email ? email.toLowerCase().trim() : email;
+      }
+    },
    mobileNo: { type: String },
     passwordHash:  { type: String }, // only for email-password login
     googleId:  { type: String },
@@ -175,6 +275,7 @@ const listingSchema = new Schema(
     description: { type: String },
     participantfee:{type:Number},
     seatCapacity:{type:Number},
+    topics:[],
     address: {
       lineAddress1: { type: String },
       lineAddress2: { type: String },
@@ -221,7 +322,8 @@ const listingSchema = new Schema(
     }],
       participantCount: { type: Number, default: 0 }, // NEW FIELD
           earning: { type: Number, default: 0 }, // NEW FIELD
-    status: { type: String, enum:["draft", "pendingApproval", "approved", "rejected"], default: "draft" }
+    status: { type: String, enum:["draft", "pendingApproval", "approved", "rejected"], default: "draft" },
+    rejectionReason:{type:String}
   },
   { timestamps: true }
 );
@@ -374,7 +476,56 @@ const Discussion = mongoose.model("Discussion", discussionSchema);
 const Payment = mongoose.model("Payment", paymentSchema);
 const Certificate = mongoose.model("Certificate", certificateSchema);
 const Review = mongoose.model("Review", reviewSchema);
+const Admin = mongoose.model("Admin", adminSchema);
 const AuditTrail = mongoose.model("AuditTrail", auditTrailSchema);
+const Category =mongoose.model("Category",categorySchema);
+const SubCategory =mongoose.model("SubCategory",subCategorySchema);
+const Topic =mongoose.model("Topic",topicSchema);
+// async function addAdmin() {
+//   try {
+//     const admin = new Admin({
+//       name: "admin test",
+//       role: "admin",
+//       mobileNo: "1234567890",
+//       emailID: "admin@gmail.com",
+//       isMobileNoVerified: true,
+//       isEmailIDVerified: true,
+//       profileImage: "",
+//       isDeleted: false
+//     });
+
+//     const result = await admin.save(); // saves to MongoDB
+//     console.log("Admin added:", result);
+//   } catch (err) {
+//     console.error("Error adding admin:", err);
+//   }
+// }
+
+// // Call the function
+// addAdmin();
+
+// async function insertAdminAuth() {
+//   try {
+//     const passwordHash = await bcrypt.hash("123456", 10);
+
+//     const adminAuth = await AuthProvider.create({
+//       userId: "admin123",           // unique id for admin
+//       emailID: "admin@gmail.com",
+//       mobileNo: "1234567890",
+//       passwordHash,
+//       role: "admin",
+//       authType: "mobile_password",
+//       lastLoginAt: new Date()
+//     });
+
+//     console.log("Admin inserted into AuthProvider:", adminAuth);
+//     process.exit(0); // exit after done
+//   } catch (err) {
+//     console.error("Error inserting admin:", err);
+//     process.exit(1);
+//   }
+// }
+// insertAdminAuth();
 
 module.exports = {
   User,
@@ -388,5 +539,9 @@ module.exports = {
   Payment,
   Certificate,
   Review,
-  AuditTrail
+  AuditTrail,
+  Admin,
+  Category,
+  SubCategory,
+  Topic
 };

@@ -169,9 +169,10 @@ const instructorLogin  = asyncHandler(async (req, res) => {
     const { loginId, password } = req.body;
 
     // Find auth by either email or mobile number
+    console.log("loginId",loginId.toLowerCase());
     const auth = await AuthProvider.findOne({
       $or: [
-        { emailID: loginId },
+        { emailID: loginId.toLowerCase() },
         { mobileNo: loginId }
       ]
     });
@@ -219,16 +220,107 @@ const instructorLogin  = asyncHandler(async (req, res) => {
 const updateInstructor = asyncHandler(async (req, res) => {
   try {
     const { id } = req.params;
-  
+    const { emailID, mobileNo } = req.body;
+
+    // 1. FIND INSTRUCTOR
     const instructor = await Instructor.findById(id);
-    if (!instructor) return res.status(404).json({ code: 1, message: "instructor not found" });
+    if (!instructor)
+      return res.status(404).json({ code: 1, message: "Instructor not found" });
+
+    // -------------------------------
+    // 2. UNIQUE CHECK: EMAIL-ID
+    // -------------------------------
+
+    if (emailID) {
+      // Check in Instructor table
+      const existingInstructorEmail = await Instructor.findOne({
+        emailID,
+        _id: { $ne: id },
+      });
+
+      if (existingInstructorEmail) {
+        return res.status(400).json({
+          code: 1,
+          message: "Email ID already exists in Instructor",
+        });
+      }
+
+      // Check in AuthProvider table
+      const existingAuthEmail = await AuthProvider.findOne({
+        emailID,
+        userId: { $ne: id },
+      });
+
+      if (existingAuthEmail) {
+        return res.status(400).json({
+          code: 1,
+          message: "Email ID already exists in AuthProvider",
+        });
+      }
+    }
+
+    // -------------------------------
+    // 3. UNIQUE CHECK: MOBILE-NO
+    // -------------------------------
+
+    if (mobileNo) {
+      // Check in Instructor table
+      const existingInstructorMobile = await Instructor.findOne({
+        mobileNo,
+        _id: { $ne: id },
+      });
+
+      if (existingInstructorMobile) {
+        return res.status(400).json({
+          code: 1,
+          message: "Mobile number already exists in Instructor",
+        });
+      }
+
+      // Check in AuthProvider table
+      const existingAuthMobile = await AuthProvider.findOne({
+        mobileNo,
+        userId: { $ne: id },
+      });
+
+      if (existingAuthMobile) {
+        return res.status(400).json({
+          code: 1,
+          message: "Mobile number already exists in AuthProvider",
+        });
+      }
+    }
+
+    // -------------------------------
+    // 4. UPDATE INSTRUCTOR
+    // -------------------------------
     Object.assign(instructor, req.body);
     await instructor.save();
-    res.json({ code: 0, data: instructor, message: "Listing updated successfully" });
+
+    // -------------------------------
+    // 5. UPDATE AUTH PROVIDER
+    // -------------------------------
+    const auth = await AuthProvider.findOne({ userId: id });
+
+    if (auth) {
+      if (emailID) auth.emailID = emailID;
+      if (mobileNo) auth.mobileNo = mobileNo;
+      await auth.save();
+    }
+
+    // -------------------------------
+    // 6. RESPONSE
+    // -------------------------------
+    res.json({
+      code: 0,
+      data: instructor,
+      message: "Instructor updated successfully",
+    });
   } catch (error) {
     res.status(500).json({ code: 1, message: error.message });
   }
 });
+
 
 
 module.exports = {

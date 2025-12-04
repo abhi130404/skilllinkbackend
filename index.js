@@ -18,6 +18,10 @@ const certificateRoutes = require("./src/routes/certificates");
 const instructorAuthRoutes = require("./src/routes/instructor/auth");
 const fileUploadRoutes=require("./src/routes/fileUpload");
 const auditTrailRoutes = require("./src/routes/auditTrail");
+const instructorRoutes=require("./src/routes/instructor");
+const adminRoutes=require("./src/routes/admin/adminAuth");
+const adminDashboardRoutes=require("./src/routes/admin/adminDashboard");
+const categoryRoutes=require("./src/routes/category");
 const connectDB = require("./src/config/db/mongodb");
 
 const app = express();
@@ -38,8 +42,12 @@ app.use("/v1/payments", paymentRoutes);
 app.use("/v1/reviews", reviewRoutes);
 app.use("/v1/certificates", certificateRoutes);
 app.use("/v1/instructor/auth",instructorAuthRoutes);
+app.use("/v1/instructor",instructorRoutes);
 app.use("/v1/fileupload",fileUploadRoutes);
 app.use("/v1/audittrail",auditTrailRoutes);
+app.use("/v1/admin/auth",adminRoutes);
+app.use("/v1",categoryRoutes);
+app.use("/v1/admin/dashboard",adminDashboardRoutes);
 app.use("/v1/uploads", express.static(path.join(__dirname, "uploads")));
 
 app.get("/v1", (req, res) => res.json({ ok: true, message: "SkillLink API running" }));

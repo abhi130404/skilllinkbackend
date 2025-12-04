@@ -202,7 +202,7 @@ const userLogin  = asyncHandler(async (req, res) => {
     // Find auth by either email or mobile number
     const auth = await AuthProvider.findOne({
       $or: [
-        { emailID: loginId },
+      { emailID: loginId.toLowerCase().trim() },
         { mobileNo: loginId }
       ]
     });

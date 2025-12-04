@@ -1,6 +1,6 @@
 const asyncHandler = require("express-async-handler");
 const { verify } = require("../utils/jwt");
-const { User, Instructor } = require("../models/models");
+const { User, Instructor, Admin } = require("../models/models");
 
 const protect = asyncHandler(async (req, res, next) => {
   const auth = req.headers.authorization;
@@ -13,17 +13,18 @@ const protect = asyncHandler(async (req, res, next) => {
     const decoded = verify(token);
     
     // Try to find user in User model first
-    let user = await User.findById(decoded.id);
     
     // If not found in User model, try Instructor model
-    if (!user) {
-      user = await Instructor.findById(decoded.id);
-    }
+    let user =
+    (await User.findById(decoded.id)) ||
+    (await Instructor.findById(decoded.id)) ||
+    (await Admin.findById(decoded.id));
+
+  if (!user) {
+    return res.status(401).json({ message: "User not found" });
+  }
     
-    if (!user) {
-      res.status(401).json({ message: "User not found" });
-      return;
-    }
+   
     
     req.user = user;
     next();
